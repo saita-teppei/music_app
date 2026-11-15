@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<full-backup-content>
+    <exclude domain="sharedpref" path="secure_tokens.xml" />
+    <exclude domain="file" path="music/" />
+    <exclude domain="file" path="covers/" />
+    <exclude domain="file" path="updates/" />
+</full-backup-content>

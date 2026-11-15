@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 既定はHTTPSのみ・システムの証明書のみ信頼する(証明書検証は無効化しない)。
+     OpenCloudがhttpの場合は、そのホストだけ下の domain-config に追加してクリアテキストを許可する。
+     tailnetのMagicDNS名(*.ts.net)はWireGuardで暗号化済みのためhttpを許可している。
+     自己署名証明書の場合は res/raw に証明書を置き、domain-config の trust-anchors に追加する。 -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">ts.net</domain>
+    </domain-config>
+</network-security-config>
