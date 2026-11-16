@@ -1,6 +1,11 @@
 package com.saitateppei.opencloudflac.ui.screens
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -183,10 +188,17 @@ fun LibraryScreen(nav: NavController, main: MainViewModel) {
                 return@Column
             }
             val tabs = listOf("曲", "アーティスト", "アルバム", "プレイリスト")
-            PrimaryTabRow(selectedTabIndex = tab) {
-                tabs.forEachIndexed { i, t -> Tab(selected = tab == i, onClick = { tab = i }, text = { Text(t) }) }
+            // タブは左右スワイプでも切り替えられる。開いていたタブは画面回転や戻ったときも保つ。
+            val pager = rememberPagerState(initialPage = tab) { tabs.size }
+            val scope = rememberCoroutineScope()
+            LaunchedEffect(pager.currentPage) { tab = pager.currentPage }
+            PrimaryTabRow(selectedTabIndex = pager.currentPage) {
+                tabs.forEachIndexed { i, t ->
+                    Tab(selected = pager.currentPage == i, onClick = { scope.launch { pager.animateScrollToPage(i) } }, text = { Text(t) })
+                }
             }
-            when (tab) {
+            HorizontalPager(state = pager, modifier = Modifier.fillMaxSize(), key = { it }) { page ->
+            when (page) {
                 0 -> {
                     val tracks by vm.tracks.collectAsStateWithLifecycle()
                     if (tracks.isEmpty()) EmptyState("まだ曲がありません。右上の雲のアイコンからサーバーの曲をダウンロードしてください。")
@@ -224,6 +236,7 @@ fun LibraryScreen(nav: NavController, main: MainViewModel) {
                     }
                 }
                 else -> PlaylistsTab(nav, main)
+            }
             }
         }
     }
