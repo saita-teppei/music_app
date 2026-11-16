@@ -34,7 +34,9 @@ android {
                 storeFile = file(ks)
                 storePassword = System.getenv("SIGNING_KEYSTORE_PASSWORD")
                 keyAlias = System.getenv("SIGNING_KEY_ALIAS")
-                keyPassword = System.getenv("SIGNING_KEY_PASSWORD")
+                // PKCS12(keytoolの既定)では鍵のパスワード=ストアのパスワードなので、未設定ならそれを使う
+                keyPassword = System.getenv("SIGNING_KEY_PASSWORD")?.takeIf { it.isNotEmpty() }
+                    ?: System.getenv("SIGNING_KEYSTORE_PASSWORD")
             }
         }
     }

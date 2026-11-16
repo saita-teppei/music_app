@@ -65,7 +65,22 @@ curl -u "$USER:$TOKEN" -X PROPFIND -H "Depth: 1" "$URL/" -i | head -20
 curl -u "$USER:$TOKEN" -H "Range: bytes=0-99" "$URL/<path/to/file.flac>" -o /dev/null -D -
 ```
 
+- 405 になる場合は、そのパスがWebDAVではなくWeb画面(静的ファイル)に当たっている。下の「URLの探し方」で正しいパスを調べる。
 - 401 になる場合はアプリトークンのBasic認証が通っていない。認証方式の再検討が必要(設計書 7章)。
+### URLの探し方(PowerShell)
+
+```powershell
+$HOSTURL = "https://<opencloud-host>"
+# 1) パスの候補を総当たり(207 が正解)
+foreach ($p in "/remote.php/webdav/", "/webdav/", "/dav/files/$USER/", "/remote.php/dav/files/$USER/") {
+  $code = curl.exe -s -o NUL -w "%{http_code}" -u "${USER}:${TOKEN}" -X PROPFIND -H "Depth: 1" "$HOSTURL$p"
+  "$code  $p"
+}
+# 2) Graph API から個人スペースのWebDAV URLを取得(これをアプリのURLに入れる)
+(curl.exe -s -u "${USER}:${TOKEN}" "$HOSTURL/graph/v1.0/me/drives" | ConvertFrom-Json).value |
+  Select-Object driveType, name, @{n='webDavUrl'; e={ $_.root.webDavUrl }}
+```
+
 - フォルダのETagが配下の変更で変わることも確認しておくと、同期の負荷を抑えられる。
 
 ## ビルド
@@ -85,7 +100,10 @@ JDK 17 以上と Android SDK(API 35)が必要。
    ```
 2. GitHubリポジトリの Settings → Secrets and variables → Actions に登録
    - `SIGNING_KEYSTORE_BASE64`(`base64 -w0 release.jks` の出力)
-   - `SIGNING_KEYSTORE_PASSWORD` / `SIGNING_KEY_ALIAS` / `SIGNING_KEY_PASSWORD`
+   - `SIGNING_KEYSTORE_PASSWORD`(keytool で入力したパスワード)
+   - `SIGNING_KEY_ALIAS`(上の例なら `release`)
+   - `SIGNING_KEY_PASSWORD` は**不要**。keytool の既定形式(PKCS12)では鍵のパスワードがストアのパスワードと同じになるため、
+     未設定ならストアのパスワードを使う。古いJKS形式で別のパスワードを付けた場合だけ登録する。
 3. タグを push する。バージョンはタグから決まる(`v1.2.3` → versionName `1.2.3`, versionCode `10203`)。
    ```sh
    git tag v0.1.0 && git push origin v0.1.0
