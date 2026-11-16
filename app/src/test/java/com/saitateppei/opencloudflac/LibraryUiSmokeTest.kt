@@ -96,6 +96,8 @@ class LibraryUiSmokeTest {
         clickText("曲2")
         rule.waitForIdle()
         clickDesc("次の曲")
+        clickDesc("シャッフル")
+        clickDesc("再生を停止")
         rule.waitForIdle()
     }
 

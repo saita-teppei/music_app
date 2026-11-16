@@ -36,6 +36,7 @@ import androidx.compose.material.icons.filled.SelectAll
 import androidx.compose.material.icons.filled.Shuffle
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SkipPrevious
+import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
@@ -442,7 +443,10 @@ fun PlayerScreen(nav: NavController, main: MainViewModel) {
     var dragging by remember { mutableStateOf(false) }
     var dragPos by remember { mutableFloatStateOf(0f) }
 
-    SimpleScaffold(nav, "再生中", actions = { IconButton(onClick = { nav.popBackStack() }) { Icon(Icons.Default.ExpandMore, "閉じる") } }) { m ->
+    SimpleScaffold(nav, "再生中", actions = {
+        IconButton(onClick = { main.stop(); nav.popBackStack() }) { Icon(Icons.Default.Stop, "再生を停止") }
+        IconButton(onClick = { nav.popBackStack() }) { Icon(Icons.Default.ExpandMore, "閉じる") }
+    }) { m ->
         if (!s.hasItem) { EmptyState("再生中の曲はありません"); return@SimpleScaffold }
         Column(m.fillMaxSize().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
             val artwork = s.artworkUri?.path?.let { File(it) }

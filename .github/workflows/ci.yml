@@ -1,10 +1,15 @@
 name: CI
 
+# PRと main への push だけで動かす(作業ブランチへの push とPRで二重に走らないように)
 on:
-  push:
-    branches: ['**']
-    tags-ignore: ['v*']
   pull_request:
+  push:
+    branches: [main]
+
+# 同じブランチで新しい push があれば古い実行は止める
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -16,9 +21,20 @@ jobs:
           distribution: temurin
           java-version: '17'
       - uses: gradle/actions/setup-gradle@v4
+        with:
+          # PRでもキャッシュを書き込む(既定では main だけ)
+          cache-read-only: false
+      # Robolectric が取得する Android のjarは Gradle のキャッシュに含まれないので別に保存する
+      - uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository/org/robolectric
+          key: robolectric-${{ hashFiles('app/build.gradle.kts', 'app/src/test/resources/robolectric.properties') }}
+          restore-keys: robolectric-
       - name: Unit tests, lint, debug build
-        run: ./gradlew --no-daemon :app:testDebugUnitTest :app:lintDebug :app:assembleDebug
+        run: ./gradlew :app:testDebugUnitTest :app:lintDebug :app:assembleDebug
       - uses: actions/upload-artifact@v4
+        if: github.event_name == 'pull_request'
         with:
           name: app-debug
           path: app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 7

@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.SkipNext
+import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
@@ -206,7 +207,7 @@ fun ConfirmDialog(title: String, text: String, onOk: () -> Unit, onDismiss: () -
 }
 
 @Composable
-fun MiniPlayer(state: PlayerUiState, onOpen: () -> Unit, onToggle: () -> Unit, onNext: () -> Unit) {
+fun MiniPlayer(state: PlayerUiState, onOpen: () -> Unit, onToggle: () -> Unit, onNext: () -> Unit, onStop: () -> Unit) {
     if (!state.hasItem) return
     Surface(tonalElevation = 3.dp) {
         Column {
@@ -225,6 +226,7 @@ fun MiniPlayer(state: PlayerUiState, onOpen: () -> Unit, onToggle: () -> Unit, o
                     Icon(if (state.isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow, if (state.isPlaying) "一時停止" else "再生")
                 }
                 IconButton(onClick = onNext) { Icon(Icons.Default.SkipNext, "次の曲") }
+                IconButton(onClick = onStop) { Icon(Icons.Default.Stop, "再生を停止") }
             }
         }
     }

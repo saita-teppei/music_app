@@ -47,8 +47,10 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     fun toast(msg: String) { _message.value = msg }
     fun consumeMessage() { _message.value = null }
 
-    fun play(parent: String, tracks: List<TrackEntity>, index: Int, shuffle: Boolean = false) =
+    fun play(parent: String, tracks: List<TrackEntity>, index: Int, shuffle: Boolean? = null) =
         player.play(parent, tracks, index, shuffle)
+
+    fun stop() = player.stop()
 
     fun deleteLocal(ids: List<Long>) = viewModelScope.launch { loc.library.deleteLocal(ids); toast("ローカル保存を削除しました") }
 

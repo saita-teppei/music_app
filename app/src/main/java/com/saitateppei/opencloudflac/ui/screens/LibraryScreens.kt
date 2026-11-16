@@ -191,7 +191,7 @@ fun LibraryScreen(nav: NavController, main: MainViewModel) {
                     val tracks by vm.tracks.collectAsStateWithLifecycle()
                     if (tracks.isEmpty()) EmptyState("まだ曲がありません。右上の雲のアイコンからサーバーの曲をダウンロードしてください。")
                     else TrackList(main, MediaTree.SONGS, tracks, queued, header = {
-                        PlayButtons({ main.play(MediaTree.SONGS, tracks, 0) }, { main.play(MediaTree.SONGS, tracks, 0, shuffle = true) })
+                        PlayButtons({ main.play(MediaTree.SONGS, tracks, 0, shuffle = false) }, { main.play(MediaTree.SONGS, tracks, 0, shuffle = true) })
                     })
                 }
                 1 -> {
@@ -275,7 +275,7 @@ fun ArtistScreen(nav: NavController, main: MainViewModel, artist: String) {
     val parent = MediaTree.artistId(artist)
     DetailScaffold(nav, artist.ifEmpty { TrackEntity.UNKNOWN_ARTIST }) { m ->
         TrackList(main, parent, tracks, modifier = m, header = {
-            PlayButtons({ main.play(parent, tracks, 0) }, { main.play(parent, tracks, 0, shuffle = true) })
+            PlayButtons({ main.play(parent, tracks, 0, shuffle = false) }, { main.play(parent, tracks, 0, shuffle = true) })
         })
     }
 }
@@ -297,7 +297,7 @@ fun AlbumScreen(nav: NavController, main: MainViewModel, artist: String, album: 
                         Text("${tracks.size}曲")
                     }
                 }
-                PlayButtons({ main.play(parent, tracks, 0) }, { main.play(parent, tracks, 0, shuffle = true) })
+                PlayButtons({ main.play(parent, tracks, 0, shuffle = false) }, { main.play(parent, tracks, 0, shuffle = true) })
             }
         })
     }
@@ -324,7 +324,7 @@ fun PlaylistScreen(nav: NavController, main: MainViewModel, id: Long) {
         LazyColumn(m.fillMaxSize()) {
             item {
                 Column {
-                    PlayButtons({ main.play(parent, tracks, 0) }, { main.play(parent, tracks, 0, shuffle = true) })
+                    PlayButtons({ main.play(parent, tracks, 0, shuffle = false) }, { main.play(parent, tracks, 0, shuffle = true) })
                     if (missing.isNotEmpty()) {
                         OutlinedButton(onClick = { main.redownload(missing.map { it.id }) }, modifier = Modifier.padding(horizontal = 16.dp)) {
                             Icon(Icons.Default.Download, null); Text("未ダウンロードの${missing.size}曲を取得")

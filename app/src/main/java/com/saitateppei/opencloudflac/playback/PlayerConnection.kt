@@ -69,18 +69,29 @@ class PlayerConnection(context: Context) {
         )
     }
 
-    /** [parent] は MediaTree の親ID。保存済みの曲だけを並べて再生する。 */
-    fun play(parent: String, tracks: List<TrackEntity>, startIndex: Int, shuffle: Boolean = false) {
+    /**
+     * [parent] は MediaTree の親ID。保存済みの曲だけを並べて再生する。
+     * [shuffle] が null なら現在のシャッフル設定を保つ。true なら無作為な曲から始める。
+     */
+    fun play(parent: String, tracks: List<TrackEntity>, startIndex: Int, shuffle: Boolean? = null) {
         val c = controller ?: return
         val playable = tracks.filter { it.isDownloaded }
         if (playable.isEmpty()) return
         val startId = tracks.getOrNull(startIndex)?.id
-        val start = playable.indexOfFirst { it.id == startId }.coerceAtLeast(0)
+        val start = if (shuffle == true) playable.indices.random()
+        else playable.indexOfFirst { it.id == startId }.coerceAtLeast(0)
         val items = playable.map { MediaItem.Builder().setMediaId(MediaTree.trackMediaId(parent, it.id)).build() }
-        c.shuffleModeEnabled = shuffle
-        c.setMediaItems(items, if (shuffle) 0 else start, 0)
+        if (shuffle != null) c.shuffleModeEnabled = shuffle
+        c.setMediaItems(items, start, 0)
         c.prepare()
         c.play()
+    }
+
+    /** 再生を止めてキューを空にする(通知も消える) */
+    fun stop() {
+        val c = controller ?: return
+        c.stop()
+        c.clearMediaItems()
     }
 
     fun togglePlay() {

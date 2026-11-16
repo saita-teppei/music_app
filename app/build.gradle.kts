@@ -23,6 +23,8 @@ android {
         targetSdk = 35
         versionCode = versionCodeOf(appVersionName).coerceAtLeast(1)
         versionName = appVersionName
+        // 日本語と英語以外のライブラリ翻訳を入れない
+        androidResources.localeFilters += listOf("ja", "en")
         buildConfigField("String", "UPDATE_REPO", "\"${findProperty("updateRepo") ?: ""}\"")
     }
 
@@ -43,12 +45,27 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            // R8で未使用コードとリソースを除去してAPKを小さくする
+            isMinifyEnabled = true
+            isShrinkResources = true
             if (System.getenv("SIGNING_KEYSTORE_PATH") != null) {
                 signingConfig = signingConfigs.getByName("release")
             }
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
+    }
+
+    // Google Play向けの依存関係メタデータはサイドロード配布では不要
+    dependenciesInfo {
+        includeInApk = false
+        includeInBundle = false
+    }
+
+    packaging {
+        resources.excludes += listOf(
+            "META-INF/*.version", "META-INF/*.kotlin_module", "META-INF/LICENSE*", "META-INF/NOTICE*",
+            "kotlin/**", "DebugProbesKt.bin",
+        )
     }
 
     compileOptions {
@@ -110,5 +127,9 @@ dependencies {
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
 }
 
-// Robolectricのテストはクラスごとに別JVMで動かす(静的な状態がテスト間で残らないように)
-tasks.withType<Test>().configureEach { forkEvery = 1 }
+// Robolectricのテストはクラスごとに別JVMで動かす(静的な状態がテスト間で残らないように)。
+// その分、CPU数に合わせて並列に走らせる。
+tasks.withType<Test>().configureEach {
+    forkEvery = 1
+    maxParallelForks = Runtime.getRuntime().availableProcessors().coerceAtLeast(1)
+}

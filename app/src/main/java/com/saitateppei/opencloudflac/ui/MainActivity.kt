@@ -119,7 +119,7 @@ private fun AppRoot(main: MainViewModel, route: String?, consumeRoute: () -> Uni
             }
             if (current != Routes.PLAYER && current != Routes.SETUP) {
                 Box(Modifier.navigationBarsPadding()) {
-                    MiniPlayer(player, onOpen = { nav.navigate(Routes.PLAYER) }, onToggle = main.player::togglePlay, onNext = { main.player.next() })
+                    MiniPlayer(player, onOpen = { nav.navigate(Routes.PLAYER) }, onToggle = main.player::togglePlay, onNext = { main.player.next() }, onStop = main::stop)
                 }
             }
         }
