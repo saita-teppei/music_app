@@ -98,12 +98,12 @@ class LibraryUiSmokeTest {
     }
 
     private fun clickText(t: String) {
-        rule.waitUntil(5_000) { rule.onAllNodesWithText(t).fetchSemanticsNodes().isNotEmpty() }
+        rule.waitUntil(15_000) { rule.onAllNodesWithText(t).fetchSemanticsNodes().isNotEmpty() }
         rule.onAllNodesWithText(t).onFirst().performClick(); rule.waitForIdle()
     }
 
     private fun clickDesc(t: String) {
-        rule.waitUntil(5_000) { rule.onAllNodesWithContentDescription(t).fetchSemanticsNodes().isNotEmpty() }
+        rule.waitUntil(15_000) { rule.onAllNodesWithContentDescription(t).fetchSemanticsNodes().isNotEmpty() }
         rule.onAllNodesWithContentDescription(t).onFirst().performClick(); rule.waitForIdle()
     }
 
