@@ -340,13 +340,13 @@ fun PlaylistScreen(nav: NavController, main: MainViewModel, id: Long) {
                     playing = false,
                     queued = row.track.id in queued,
                     onClick = { main.play(parent, tracks, i) },
-                    onAddToPlaylist = { },
+                    onAddToPlaylist = null,
                     onDeleteLocal = { main.deleteLocal(listOf(row.track.id)) },
                     onRedownload = { main.redownload(listOf(row.track.id)) },
-                    extraActions = {
-                        IconButton(onClick = { vm.move(id, i, i - 1) }, enabled = i > 0) { Icon(Icons.Default.ArrowUpward, "上へ") }
-                        IconButton(onClick = { vm.move(id, i, i + 1) }, enabled = i < items.size - 1) { Icon(Icons.Default.ArrowDownward, "下へ") }
-                        IconButton(onClick = { vm.remove(id, row.itemId) }) { Icon(Icons.Default.Close, "プレイリストから外す") }
+                    extraMenuItems = buildList {
+                        if (i > 0) add("上へ移動" to { vm.move(id, i, i - 1) })
+                        if (i < items.size - 1) add("下へ移動" to { vm.move(id, i, i + 1) })
+                        add("プレイリストから外す" to { vm.remove(id, row.itemId) })
                     },
                 )
             }

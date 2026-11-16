@@ -17,7 +17,10 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -32,6 +35,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.saitateppei.opencloudflac.CrashReporter
 import com.saitateppei.opencloudflac.Notifications
 import com.saitateppei.opencloudflac.ui.screens.AlbumScreen
 import com.saitateppei.opencloudflac.ui.screens.ArtistScreen
@@ -71,7 +75,13 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         if (Build.VERSION.SDK_INT >= 33) notifPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
         pendingRoute.value = intent.getStringExtra(Notifications.EXTRA_ROUTE)
-        setContent { AppTheme { AppRoot(main, pendingRoute.value) { pendingRoute.value = null } } }
+        val crash = CrashReporter.take(this)
+        setContent {
+            AppTheme {
+                AppRoot(main, pendingRoute.value) { pendingRoute.value = null }
+                if (crash != null) CrashDialog(crash)
+            }
+        }
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -82,14 +92,15 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 private fun AppRoot(main: MainViewModel, route: String?, consumeRoute: () -> Unit) {
-    val loaded by main.serverLoaded.collectAsStateWithLifecycle()
+    val hasServerAtStart by main.hasServerAtStart.collectAsStateWithLifecycle()
     val server by main.server.collectAsStateWithLifecycle()
     val player by main.player.state.collectAsStateWithLifecycle()
     val message by main.message.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
     val nav = rememberNavController()
 
-    if (!loaded) {
+    val startWithServer = hasServerAtStart
+    if (startWithServer == null) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
         return
     }
@@ -104,7 +115,7 @@ private fun AppRoot(main: MainViewModel, route: String?, consumeRoute: () -> Uni
     Box(Modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize()) {
             Box(Modifier.weight(1f)) {
-                AppNavHost(nav, main, start = if (server == null) Routes.SETUP else Routes.LIBRARY)
+                AppNavHost(nav, main, start = if (startWithServer) Routes.LIBRARY else Routes.SETUP)
             }
             if (current != Routes.PLAYER && current != Routes.SETUP) {
                 Box(Modifier.navigationBarsPadding()) {
@@ -150,4 +161,31 @@ private fun AppNavHost(nav: NavHostController, main: MainViewModel, start: Strin
         composable(Routes.LOGS) { LogScreen(nav) }
         composable(Routes.PLAYER) { PlayerScreen(nav, main) }
     }
+}
+
+/** 前回のクラッシュ内容。コピーして共有できる。 */
+@Composable
+private fun CrashDialog(text: String) {
+    var open by remember { mutableStateOf(true) }
+    if (!open) return
+    val clipboard = androidx.compose.ui.platform.LocalClipboardManager.current
+    androidx.compose.material3.AlertDialog(
+        onDismissRequest = { open = false },
+        title = { androidx.compose.material3.Text("前回、アプリが異常終了しました") },
+        text = {
+            androidx.compose.foundation.text.selection.SelectionContainer {
+                androidx.compose.material3.Text(
+                    text,
+                    style = androidx.compose.material3.MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.verticalScroll(rememberScrollState()),
+                )
+            }
+        },
+        confirmButton = {
+            androidx.compose.material3.TextButton(onClick = {
+                clipboard.setText(androidx.compose.ui.text.AnnotatedString(text)); open = false
+            }) { androidx.compose.material3.Text("コピーして閉じる") }
+        },
+        dismissButton = { androidx.compose.material3.TextButton(onClick = { open = false }) { androidx.compose.material3.Text("閉じる") } },
+    )
 }

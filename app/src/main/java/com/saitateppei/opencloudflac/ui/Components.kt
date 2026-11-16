@@ -85,10 +85,11 @@ fun TrackRow(
     playing: Boolean,
     queued: Boolean,
     onClick: () -> Unit,
-    onAddToPlaylist: () -> Unit,
+    onAddToPlaylist: (() -> Unit)?,
     onDeleteLocal: () -> Unit,
     onRedownload: () -> Unit,
-    extraActions: @Composable (() -> Unit)? = null,
+    /** メニューに足す項目(表示名と処理)。行の右端に並べると狭い画面で幅が足りなくなるため、メニューに入れる。 */
+    extraMenuItems: List<Pair<String, () -> Unit>> = emptyList(),
 ) {
     var menu by remember { mutableStateOf(false) }
     val needsAttention = track.playbackError || track.hasUpdate
@@ -118,11 +119,13 @@ fun TrackRow(
         trailingContent = {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 if (needsAttention) Icon(Icons.Default.Warning, "要確認", tint = MaterialTheme.colorScheme.error)
-                extraActions?.invoke()
                 Box {
                     IconButton(onClick = { menu = true }) { Icon(Icons.Default.MoreVert, "メニュー") }
                     DropdownMenu(menu, onDismissRequest = { menu = false }) {
-                        DropdownMenuItem(
+                        for ((label, action) in extraMenuItems) {
+                            DropdownMenuItem(text = { Text(label) }, onClick = { menu = false; action() })
+                        }
+                        if (onAddToPlaylist != null) DropdownMenuItem(
                             text = { Text("プレイリストに追加") },
                             leadingIcon = { Icon(Icons.AutoMirrored.Filled.PlaylistAdd, null) },
                             onClick = { menu = false; onAddToPlaylist() },
