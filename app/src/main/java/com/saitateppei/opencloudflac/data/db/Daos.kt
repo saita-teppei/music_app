@@ -38,6 +38,8 @@ data class PlaylistTrackRow(
 /** アルバムアーティストが無ければアーティストを使う(5.2) */
 private const val ARTIST_KEY = "COALESCE(NULLIF(album_artist, ''), NULLIF(artist, ''), '')"
 private const val ALBUM_KEY = "COALESCE(NULLIF(album, ''), '')"
+// 注意: GROUP BY / ORDER BY に album や artist と書くと、SQLiteは別名ではなく元の列を使う。
+// グループ化は必ず上の式で書く(コンピレーションが曲ごとに分かれてしまうため)。
 private const val ORDER_IN_ALBUM = "COALESCE(disc_number, 0), COALESCE(track_number, 0), remote_path"
 
 @Dao
@@ -97,15 +99,15 @@ interface TrackDao {
 
     @Query(
         """SELECT $ALBUM_KEY AS album, $ARTIST_KEY AS artist, COUNT(*) AS trackCount, MAX(cover_file) AS coverFile
-           FROM track WHERE local_file IS NOT NULL GROUP BY album, artist
-           ORDER BY album = '', album COLLATE NOCASE"""
+           FROM track WHERE local_file IS NOT NULL GROUP BY $ALBUM_KEY, $ARTIST_KEY
+           ORDER BY $ALBUM_KEY = '', $ALBUM_KEY COLLATE NOCASE, $ARTIST_KEY COLLATE NOCASE"""
     )
     fun observeAlbums(): Flow<List<AlbumRow>>
 
     @Query(
         """SELECT $ALBUM_KEY AS album, $ARTIST_KEY AS artist, COUNT(*) AS trackCount, MAX(cover_file) AS coverFile
-           FROM track WHERE local_file IS NOT NULL AND $ARTIST_KEY = :artist GROUP BY album, artist
-           ORDER BY album = '', album COLLATE NOCASE"""
+           FROM track WHERE local_file IS NOT NULL AND $ARTIST_KEY = :artist GROUP BY $ALBUM_KEY, $ARTIST_KEY
+           ORDER BY $ALBUM_KEY = '', $ALBUM_KEY COLLATE NOCASE, $ARTIST_KEY COLLATE NOCASE"""
     )
     suspend fun albumsOfArtist(artist: String): List<AlbumRow>
 
