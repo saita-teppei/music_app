@@ -1,6 +1,7 @@
 name: Release
 
 # v1.2.3 のようなタグを push すると、署名済みAPKとSHA-256をGitHub Releaseに添付する。
+# GitHubの画面で「Create a new release」から新しいタグを作った場合も動く(既存のReleaseに添付する)。
 # アプリの「更新を確認」はこのリリースを参照する(F10)。
 on:
   push:
@@ -45,7 +46,17 @@ jobs:
           cp app/build/outputs/apk/release/app-release.apk "$APK"
           sha256sum "$APK" | cut -d' ' -f1 > "$APK.sha256"
           SHA=$(cat "$APK.sha256")
-          gh release create "$GITHUB_REF_NAME" "$APK" "$APK.sha256" \
-            --title "$GITHUB_REF_NAME" \
-            --notes "SHA-256: $SHA"
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            # GitHubの画面から「Release作成」でタグを打った場合: 既存のReleaseに添付し、本文にSHA-256を追記する
+            gh release upload "$GITHUB_REF_NAME" "$APK" "$APK.sha256" --clobber
+            BODY=$(gh release view "$GITHUB_REF_NAME" --json body -q .body)
+            if ! printf '%s' "$BODY" | grep -q "$SHA"; then
+              printf '%s\n\nSHA-256: %s\n' "$BODY" "$SHA" > notes.md
+              gh release edit "$GITHUB_REF_NAME" --notes-file notes.md
+            fi
+          else
+            gh release create "$GITHUB_REF_NAME" "$APK" "$APK.sha256" \
+              --title "$GITHUB_REF_NAME" \
+              --notes "SHA-256: $SHA"
+          fi
           rm -f "$RUNNER_TEMP/release.jks"
