@@ -92,14 +92,15 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 private fun AppRoot(main: MainViewModel, route: String?, consumeRoute: () -> Unit) {
-    val loaded by main.serverLoaded.collectAsStateWithLifecycle()
+    val hasServerAtStart by main.hasServerAtStart.collectAsStateWithLifecycle()
     val server by main.server.collectAsStateWithLifecycle()
     val player by main.player.state.collectAsStateWithLifecycle()
     val message by main.message.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
     val nav = rememberNavController()
 
-    if (!loaded) {
+    val startWithServer = hasServerAtStart
+    if (startWithServer == null) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
         return
     }
@@ -114,7 +115,7 @@ private fun AppRoot(main: MainViewModel, route: String?, consumeRoute: () -> Uni
     Box(Modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize()) {
             Box(Modifier.weight(1f)) {
-                AppNavHost(nav, main, start = if (server == null) Routes.SETUP else Routes.LIBRARY)
+                AppNavHost(nav, main, start = if (startWithServer) Routes.LIBRARY else Routes.SETUP)
             }
             if (current != Routes.PLAYER && current != Routes.SETUP) {
                 Box(Modifier.navigationBarsPadding()) {

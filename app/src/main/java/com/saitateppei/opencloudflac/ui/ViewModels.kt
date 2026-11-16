@@ -32,14 +32,14 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     private val loc = app.locator
     val player = PlayerConnection(app)
     val server = loc.settings.observeServer().state(this, null)
-    val serverLoaded = MutableStateFlow(false)
+    /** 起動時に読んだ「サーバー設定があるか」。null は読み込み中。最初の画面の決定に使う。 */
+    val hasServerAtStart = MutableStateFlow<Boolean?>(null)
     private val _message = MutableStateFlow<String?>(null)
     val message = _message.asStateFlow()
 
     init {
         viewModelScope.launch {
-            loc.settings.server()
-            serverLoaded.value = true
+            hasServerAtStart.value = loc.settings.server() != null
         }
         loc.sync.scanOnLaunch()
     }

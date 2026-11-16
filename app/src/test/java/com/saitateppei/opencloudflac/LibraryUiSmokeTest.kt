@@ -7,6 +7,8 @@ import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.printToString
 import androidx.media3.session.MediaLibraryService
 import androidx.test.core.app.ApplicationProvider
 import com.saitateppei.opencloudflac.data.db.PlaylistEntity
@@ -98,7 +100,11 @@ class LibraryUiSmokeTest {
     }
 
     private fun clickText(t: String) {
-        rule.waitUntil(15_000) { rule.onAllNodesWithText(t).fetchSemanticsNodes().isNotEmpty() }
+        try {
+            rule.waitUntil(15_000) { rule.onAllNodesWithText(t).fetchSemanticsNodes().isNotEmpty() }
+        } catch (e: Throwable) {
+            println("SCREEN-DUMP:\n" + rule.onRoot().printToString(maxDepth = 30)); throw e
+        }
         rule.onAllNodesWithText(t).onFirst().performClick(); rule.waitForIdle()
     }
 
