@@ -20,6 +20,8 @@ jobs:
           distribution: temurin
           java-version: '17'
       - uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: false
 
       - name: Decode signing key
         env:
@@ -36,7 +38,7 @@ jobs:
           SIGNING_KEYSTORE_PASSWORD: ${{ secrets.SIGNING_KEYSTORE_PASSWORD }}
           SIGNING_KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
           SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
-        run: ./gradlew --no-daemon :app:testReleaseUnitTest :app:assembleRelease -PversionName="${GITHUB_REF_NAME#v}"
+        run: ./gradlew :app:assembleRelease -PversionName="${GITHUB_REF_NAME#v}"
 
       - name: Publish release with SHA-256
         env:

@@ -34,6 +34,7 @@ class PlaybackService : MediaLibraryService() {
     private lateinit var player: ExoPlayer
     private lateinit var session: MediaLibrarySession
     private lateinit var tree: MediaTree
+    private val shuffleFixer = ShuffleFixer()
 
     override fun onCreate() {
         super.onCreate()
@@ -48,6 +49,11 @@ class PlaybackService : MediaLibraryService() {
             .build()
         player.addListener(object : Player.Listener {
             override fun onPlayerError(error: PlaybackException) = handleError(error)
+            override fun onEvents(p: Player, events: Player.Events) {
+                if (events.containsAny(Player.EVENT_SHUFFLE_MODE_ENABLED_CHANGED, Player.EVENT_TIMELINE_CHANGED)) {
+                    shuffleFixer.apply(player)
+                }
+            }
         })
         val activity = PendingIntent.getActivity(
             this, 0,
@@ -135,6 +141,7 @@ class PlaybackService : MediaLibraryService() {
             mediaSession: MediaSession, controller: MediaSession.ControllerInfo, mediaItems: MutableList<MediaItem>,
             startIndex: Int, startPositionMs: Long,
         ): ListenableFuture<MediaItemsWithStartPosition> = scope.future {
+            shuffleFixer.reset()
             val query = mediaItems.singleOrNull()?.takeIf { it.mediaId.isEmpty() }?.requestMetadata?.searchQuery
             if (query != null) return@future MediaItemsWithStartPosition(tree.search(query), 0, 0)
             if (mediaItems.size == 1) {
