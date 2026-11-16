@@ -42,7 +42,10 @@ class PlayerConnection(context: Context) {
         val token = SessionToken(context, ComponentName(context, PlaybackService::class.java))
         val future = MediaController.Builder(context, token).buildAsync()
         future.addListener({
-            controller = future.get().also { it.addListener(listener) }
+            // 接続に失敗してもアプリ全体を落とさない(再生操作が効かないだけにする)
+            controller = try { future.get() } catch (e: Exception) {
+                android.util.Log.e("PlayerConnection", "再生サービスに接続できません", e); null
+            }?.also { it.addListener(listener) }
             refresh()
         }, MoreExecutors.directExecutor())
     }

@@ -2,6 +2,7 @@ package com.saitateppei.opencloudflac
 
 import android.app.Application
 import android.content.Context
+import androidx.work.Configuration
 import com.saitateppei.opencloudflac.backup.PlaylistBackup
 import com.saitateppei.opencloudflac.data.AppLog
 import com.saitateppei.opencloudflac.data.LibraryRepository
@@ -30,12 +31,17 @@ class ServiceLocator(context: Context) {
     val backup = PlaylistBackup(db, settings)
 }
 
-class App : Application() {
+class App : Application(), Configuration.Provider {
+    /** WorkManagerを必要時に初期化する(起動順に依存しない) */
+    override val workManagerConfiguration: Configuration
+        get() = Configuration.Builder().setMinimumLoggingLevel(android.util.Log.INFO).build()
+
     lateinit var locator: ServiceLocator
         private set
 
     override fun onCreate() {
         super.onCreate()
+        CrashReporter.install(this)
         locator = ServiceLocator(this)
         Notifications.createChannels(this)
         locator.sync.schedulePeriodic()
