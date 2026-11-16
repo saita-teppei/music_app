@@ -65,7 +65,22 @@ curl -u "$USER:$TOKEN" -X PROPFIND -H "Depth: 1" "$URL/" -i | head -20
 curl -u "$USER:$TOKEN" -H "Range: bytes=0-99" "$URL/<path/to/file.flac>" -o /dev/null -D -
 ```
 
+- 405 になる場合は、そのパスがWebDAVではなくWeb画面(静的ファイル)に当たっている。下の「URLの探し方」で正しいパスを調べる。
 - 401 になる場合はアプリトークンのBasic認証が通っていない。認証方式の再検討が必要(設計書 7章)。
+### URLの探し方(PowerShell)
+
+```powershell
+$HOSTURL = "https://<opencloud-host>"
+# 1) パスの候補を総当たり(207 が正解)
+foreach ($p in "/remote.php/webdav/", "/webdav/", "/dav/files/$USER/", "/remote.php/dav/files/$USER/") {
+  $code = curl.exe -s -o NUL -w "%{http_code}" -u "${USER}:${TOKEN}" -X PROPFIND -H "Depth: 1" "$HOSTURL$p"
+  "$code  $p"
+}
+# 2) Graph API から個人スペースのWebDAV URLを取得(これをアプリのURLに入れる)
+(curl.exe -s -u "${USER}:${TOKEN}" "$HOSTURL/graph/v1.0/me/drives" | ConvertFrom-Json).value |
+  Select-Object driveType, name, @{n='webDavUrl'; e={ $_.root.webDavUrl }}
+```
+
 - フォルダのETagが配下の変更で変わることも確認しておくと、同期の負荷を抑えられる。
 
 ## ビルド

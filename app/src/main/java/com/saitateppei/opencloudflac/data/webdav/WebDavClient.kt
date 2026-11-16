@@ -24,6 +24,9 @@ sealed class DavException(message: String) : IOException(message) {
     }
     class Unauthorized(code: Int) : DavException("認証に失敗しました($code)。トークンを確認してください")
     class NotFound : DavException("サーバー上にもうありません(404)")
+    class NotWebDav(code: Int) : DavException(
+        "このURLはWebDAVの場所ではありません($code)。/dav/spaces/<スペースID> などのURLを確認してください"
+    )
     class Http(val code: Int) : DavException("サーバーエラー($code)")
 }
 
@@ -95,6 +98,7 @@ class WebDavClient(private val baseClient: OkHttpClient) {
         when {
             r.code == 401 || r.code == 403 -> throw DavException.Unauthorized(r.code)
             r.code == 404 -> throw DavException.NotFound()
+            r.code == 405 || r.code == 501 -> throw DavException.NotWebDav(r.code)
             !r.isSuccessful -> throw DavException.Http(r.code)
         }
     }

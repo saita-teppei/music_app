@@ -116,6 +116,8 @@ class DownloadWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(c
             return Outcome.Auth(e.message ?: "認証エラー")
         } catch (e: DavException.NotFound) {
             return Outcome.Fatal(e.message ?: "404")
+        } catch (e: DavException.NotWebDav) {
+            return Outcome.Fatal(e.message ?: "WebDAVではありません")
         } catch (e: DavException.Http) {
             return if (e.code >= 500) Outcome.Transient(e.message ?: "") else Outcome.Fatal(e.message ?: "")
         } catch (e: IOException) {
