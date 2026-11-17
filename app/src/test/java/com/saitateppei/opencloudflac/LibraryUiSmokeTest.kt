@@ -7,6 +7,9 @@ import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeLeft
+import androidx.compose.ui.test.swipeRight
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.printToString
 import androidx.media3.session.MediaLibraryService
@@ -58,6 +61,21 @@ class LibraryUiSmokeTest {
         db.trackDao().insert(TrackEntity(serverId = sid, remotePath = "/M/未.flac", syncFolderId = null))
         val pid = db.playlistDao().insert(PlaylistEntity(name = "PL"))
         db.playlistDao().replaceItems(pid, ids)
+    }
+
+    @Test fun swipeBetweenTabs() {
+        rule.waitUntil(15_000) { rule.onAllNodesWithText("曲1").fetchSemanticsNodes().isNotEmpty() }
+        rule.onRoot().performTouchInput { swipeLeft() }   // 曲 → アーティスト
+        rule.waitForIdle()
+        rule.waitUntil(15_000) { rule.onAllNodesWithText("1曲").fetchSemanticsNodes().isNotEmpty() } // 不明なアーティストの曲数
+        rule.onRoot().performTouchInput { swipeLeft() }   // → アルバム
+        rule.waitForIdle()
+        rule.onRoot().performTouchInput { swipeLeft() }   // → プレイリスト
+        rule.waitForIdle()
+        rule.waitUntil(15_000) { rule.onAllNodesWithText("新しいプレイリスト").fetchSemanticsNodes().isNotEmpty() }
+        rule.onRoot().performTouchInput { swipeRight() }  // ← アルバム
+        rule.waitForIdle()
+        rule.waitUntil(15_000) { rule.onAllNodesWithText("盤").fetchSemanticsNodes().isNotEmpty() }
     }
 
     @Test fun tabsAndDetails() {
